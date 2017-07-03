@@ -5,6 +5,8 @@
 #include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
 #include "Runtime/Engine/Classes/Components/DecalComponent.h"
 #include "Kismet/HeadMountedDisplayFunctionLibrary.h"
+#include "PaperSpriteComponent.h"
+#include "Components/ArrowComponent.h"
 #include "BlobmentsV1GameMode.h"
 #include "Global_Log.h"
 #include "CurrentLandingDecal.h"
@@ -36,7 +38,8 @@ ABlobmentsV1Character::ABlobmentsV1Character()
 		
 	
 	// Create static Mesh
-	MyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
+/*	not needed, replaced with sprite
+MyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> StaticMeshAsset(TEXT("StaticMesh'/Game/MobileStarterContent/Props/MaterialSphere.MaterialSphere'"));
 	if (StaticMeshAsset.Succeeded())
 	{
@@ -49,20 +52,39 @@ ABlobmentsV1Character::ABlobmentsV1Character()
 	}
 	MyMesh->SetRelativeScale3D(FVector(1.1f, 1.1f, 1.1f));
 	MyMesh->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+	*/ 
+	//Create sprite
+	if (!RootComponent)
+	{
+		RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("BobBase"));
+	}
+
+	BobMainDirection = CreateDefaultSubobject<UArrowComponent>(TEXT("BobMainDirection"));
+	BobMainDirection->SetupAttachment(RootComponent);
+
+	BobSprite = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("BobSprite"));
+	BobSprite->SetupAttachment(BobMainDirection);
 
 
 	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->bAbsoluteRotation = true; // Don't want arm to rotate when character does
-	CameraBoom->TargetArmLength = 1600.f;
+	CameraBoom->TargetArmLength = 1500.f;
+	CameraBoom->CameraLagSpeed = 2.0f;
+	CameraBoom->bUsePawnControlRotation = false;
+	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->bEnableCameraRotationLag = false;
 	CameraBoom->RelativeRotation = FRotator(-90.f, 0.f, 0.f);
 	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
 
 										  // Create a camera...
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
+	TopDownCameraComponent->ProjectionMode = ECameraProjectionMode::Orthographic;
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+	TopDownCameraComponent->OrthoWidth = 4024.0f;
+	TopDownCameraComponent->AspectRatio = 3.0f / 4.0f;
 
 	// Create a decal in the world to show the character's potential landing location
 	PotentialLandingDecal = CreateDefaultSubobject<UDecalComponent>("PotentialLandingDecal");
