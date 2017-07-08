@@ -97,20 +97,7 @@ MyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	PotentialLandingDecal->DecalSize = FVector(16.0f, 32.0f, 600.0f);
 	PotentialLandingDecal->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f).Quaternion());
 	PotentialLandingDecal->FadeScreenSize = 0.0f;
-	PotentialLandingDecal->SetVisibility(false);
-
-	// Create a decal in the world to show the character's actual landing location
-	/*CurrentLandingDecal = CreateDefaultSubobject<UDecalComponent>("CurrentLandingDecal");
-	CurrentLandingDecal->SetupAttachment(RootComponent);
-	static ConstructorHelpers::FObjectFinder<UMaterial> DecalMaterialAssetCurrent(TEXT("Material'/Game/TopDownCPP/Blueprints/M_CurrentLandingDecal'"));
-	if (DecalMaterialAssetCurrent.Succeeded())
-	{
-		CurrentLandingDecal->SetDecalMaterial(DecalMaterialAssetCurrent.Object);
-	}
-	CurrentLandingDecal->DecalSize = FVector(16.0f, 32.0f, 600.0f);
-	CurrentLandingDecal->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f).Quaternion());
-	CurrentLandingDecal->FadeScreenSize = 0.0f;
-	CurrentLandingDecal->SetVisibility(false);*/
+	PotentialLandingDecal->SetVisibility(false); 
 
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
