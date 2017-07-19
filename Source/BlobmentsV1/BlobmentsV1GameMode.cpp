@@ -2,6 +2,7 @@
 
 #include "BlobmentsV1.h"
 #include "BlobmentsV1GameMode.h"
+#include "BadGuyMain.h"
 #include "BlobmentsV1PlayerController.h"
 #include "CurrentLandingDecal.h"
 #include "BlobmentsV1Character.h"
@@ -17,6 +18,8 @@ ABlobmentsV1GameMode::ABlobmentsV1GameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
+
+	MainTimerBeat = 2.1f;
 }
 
 void ABlobmentsV1GameMode::BeginPlay()
@@ -27,6 +30,7 @@ void ABlobmentsV1GameMode::BeginPlay()
 	{
 		LandingDecal = (ACurrentLandingDecal*) World->SpawnActor<ACurrentLandingDecal>(ACurrentLandingDecal::StaticClass());
 	}
+	StartTheBeat();
 }
 
 void ABlobmentsV1GameMode::SetLandingDecalLocation(FVector Location)
@@ -45,3 +49,26 @@ void ABlobmentsV1GameMode::SetLandingDecalVisibility(bool visibility)
 	}
 
 }
+
+void ABlobmentsV1GameMode::StartTheBeat()
+{
+	GetWorld()->GetTimerManager().SetTimer(DrumTimeHandle, this, &ABlobmentsV1GameMode::BadGuyMainBeat,MainTimerBeat,true, false);
+}
+
+void ABlobmentsV1GameMode::BadGuyMainBeat()
+{
+	for (ABadGuyMain* mainBadGuy : BadGuyMains)
+	{
+		mainBadGuy->Activate();
+	}
+}
+
+void ABlobmentsV1GameMode::AddActorToBeat(AActor* IncomingActor)
+{
+	AllActors.Add(IncomingActor);
+	if(ABadGuyMain* ActorAsBadGuyMain = Cast<ABadGuyMain>(IncomingActor))
+	{
+		BadGuyMains.Add(ActorAsBadGuyMain);
+	}
+}
+

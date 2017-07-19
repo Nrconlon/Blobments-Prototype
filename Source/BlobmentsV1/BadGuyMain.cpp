@@ -13,16 +13,24 @@ ABadGuyMain::ABadGuyMain()
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
-	Health = 100.0f;
+	Health = 100;
 	Damage = 20.0f;
-	SightDistance = 500.0f;
-	SightAngle = 60.0f;
 	YawSpeed = 90.0f;
 	JumpDistance = 20.0f;
 	JumpFrequency = 45.0f;
+
+	//Attacking
 	AttackDistance = 100.0f;
 	AttackAngle = 30.0f;
 	AttackCooldown = 2.0f;
+	TimeBeforeAttack = 0.7f;
+
+	//Movement
+	TimeBeforeJump = 0.7f;
+	GlideTime = 0.7f;
+	GlideDistancePerSecond = 20.0f;
+	IsRotating = false;
+	IsGliding = false;
 
 
 }
@@ -38,6 +46,14 @@ void ABadGuyMain::BeginPlay()
 void ABadGuyMain::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (Health >= 0)
+	{
+		DetermineMovement(DeltaTime);
+	}
+
+	ConsumeRotationInput();
+	
 
 }
 
@@ -64,6 +80,11 @@ ABlobmentsV1Character* ABadGuyMain::GetTargetAsBob()
 	return TargetBob;
 }
 
+void ABadGuyMain::BadGuyAI_Implementation(float DeltaSeconds)
+{
+	//bad guy always jumps
+}
+
 bool ABadGuyMain::BadGuyAIShouldAttack_Implementation()
 {
 	if (AActor* Target = GetTarget())
@@ -86,15 +107,97 @@ bool ABadGuyMain::BadGuyAIShouldAttack_Implementation()
 	return false;
 }
 
-void ABadGuyMain::AttackInDirection_Implementation(FVector Direction)
+/*void ABadGuyMain::AttackInDirection_Implementation(FVector Direction)
 {
 
 }
+*/
 
 
-void ABadGuyMain::JumpInDirection_Implementation(FVector Direction)
+void ABadGuyMain::JumpForward_Implementation()
 {
-	float DotToTarget = FVector::DotProduct(Direction, GetActorForwardVector());
-	float SidewaysDotToTarget = FVector::DotProduct(Direction, GetActorRightVector());
-	float DeltaYawDesired = FMath::Atan2(SidewaysDotToTarget, DotToTarget);
+	FTimerHandle TempHandle;
+	IsRotating = false;
+	IsGliding = true;
+	GetWorldTimerManager().SetTimer(TempHandle, this, &ABadGuyMain::Land, GlideTime, false, 0.0f);
 }
+
+void ABadGuyMain::Land_Implementation()
+{
+	IsGliding = false;
+}
+
+void ABadGuyMain::Activate()
+{
+	FTimerHandle TempHandle;
+	IsRotating = true;
+	GetWorldTimerManager().SetTimer(TempHandle, this, &ABadGuyMain::JumpForward, TimeBeforeAttack, false, 0.0f);
+}
+
+void ABadGuyMain::AddAttackInput()
+{
+	FTimerHandle UnusedHandle;
+	bAttackInput = true;
+	GetWorldTimerManager().SetTimer(UnusedHandle, this, &ABadGuyMain::ConsumeAttackInput, TimeBeforeAttack, false, 0.0f);
+
+}
+
+void ABadGuyMain::AddRotationInput(float DeltaYawDegrees)
+{
+	YawInput += DeltaYawDegrees;
+}
+
+float ABadGuyMain::GetRotationInput()
+{
+	return YawInput;
+}
+
+float ABadGuyMain::ConsumeRotationInput()
+{
+	float RetVal = YawInput;
+	YawInput = 0.0f;
+	return RetVal;
+}
+
+bool ABadGuyMain::GetAttackInput()
+{
+	return bAttackInput;
+}
+
+void ABadGuyMain::ConsumeAttackInput()
+{
+
+	if (BadGuyAIShouldAttack())
+	{
+		if (IDamageInterface* DamageTarget = Cast<IDamageInterface>(GetTarget()))
+		{
+			DamageTarget->ReceiveDamage(Damage);
+		}
+
+	}
+	bAttackInput = false;
+}
+
+bool ABadGuyMain::TargetInRange()
+{
+	return false;
+}
+
+void ABadGuyMain::DetermineMovement(float DeltaSeconds)
+{
+	if (IsRotating)
+	{
+		float MaxYawThisFrame = YawSpeed * DeltaSeconds;
+		FRotator DesiredRot = GetActorRotation() + FRotator(0.0f, FMath::Clamp(GetRotationInput(), -MaxYawThisFrame, MaxYawThisFrame), 0.0f);
+		SetActorRotation(DesiredRot.Quaternion());
+	}
+	else if (IsGliding)
+	{
+		FVector DesiredMovement = GlideDistancePerSecond * DeltaSeconds * GetActorForwardVector();
+		FVector OriginalLocation = GetActorLocation();
+		FVector DesiredLoc = OriginalLocation + DesiredMovement;
+		SetActorLocation(DesiredLoc, true);
+	}
+}
+
+

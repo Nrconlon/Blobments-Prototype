@@ -1,29 +1,39 @@
 // Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
 #pragma once
 #include "MainPlayerInterface.h"
+#include "DamageInterface.h"
 #include "GameFramework/Character.h"
 #include "BlobmentsV1Character.generated.h"
 
 UCLASS(Blueprintable)
-class ABlobmentsV1Character : public ACharacter, public IMainPlayerInterface
+class ABlobmentsV1Character : public ACharacter, public IMainPlayerInterface, public IDamageInterface
 {
 	GENERATED_BODY()
 
-	
+
 
 public:
 
+	UFUNCTION(BlueprintCallable, Category = "MyCategory")
+		void OnBobDeath();
+
+	//MainPlayerInterface
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "MyCategory")
 		bool HoldingClickAtLocation(const FVector DestLocation);
-		virtual bool HoldingClickAtLocation_Implementation(const FVector DestLocation) override;
+	virtual bool HoldingClickAtLocation_Implementation(const FVector DestLocation) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "MyCategory")
 		bool ActivateBob();
-		virtual bool ActivateBob_Implementation() override;
+	virtual bool ActivateBob_Implementation() override;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "MyCategory")
 		bool DeActivateBob();
-		virtual bool DeActivateBob_Implementation() override;
+	virtual bool DeActivateBob_Implementation() override;
+
+	//IDamageInterface
+	virtual void ReceiveDamage(int32 IncomingDamage) override;
+	virtual int32 GetHealthRemaining() override { return Health; }
+
 
 	ABlobmentsV1Character();
 
@@ -92,7 +102,7 @@ private:
 
 	/** A decal that projects to the cursor location. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Decal", meta = (AllowPrivateAccess = "true"))
-		class UDecalComponent* CurrentLandingDecal;
+	class UDecalComponent* CurrentLandingDecal;
 
 	/** A static mesh used to the art. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
@@ -106,6 +116,13 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh", meta = (AllowPrivateAccess = "true"))
 	class UArrowComponent* BobMainDirection;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats", meta = (AllowPrivateAccess = "true"))
+		bool IsDead;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats", meta = (AllowPrivateAccess = "true"))
+		int32 Health;
+
 	
 
 	

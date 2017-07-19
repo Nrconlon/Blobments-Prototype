@@ -16,6 +16,10 @@ DEFINE_LOG_CATEGORY_STATIC(NeilsLog, All, All)
 ABlobmentsV1Character::ABlobmentsV1Character()
 {
 
+	//Stats
+	IsDead = false;
+	Health = 100;
+
 	// Set size for player capsule
 	GetCapsuleComponent()->InitCapsuleSize(60.f, 60.0f);
 
@@ -80,11 +84,11 @@ MyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 
 										  // Create a camera...
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
-	TopDownCameraComponent->ProjectionMode = ECameraProjectionMode::Orthographic;
+	//TopDownCameraComponent->ProjectionMode = ECameraProjectionMode::Orthographic;
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-	TopDownCameraComponent->OrthoWidth = 4024.0f;
-	TopDownCameraComponent->AspectRatio = 3.0f / 4.0f;
+	//TopDownCameraComponent->OrthoWidth = 4024.0f;
+	//TopDownCameraComponent->AspectRatio = 3.0f / 4.0f;
 
 	// Create a decal in the world to show the character's potential landing location
 	PotentialLandingDecal = CreateDefaultSubobject<UDecalComponent>("PotentialLandingDecal");
@@ -197,6 +201,18 @@ bool ABlobmentsV1Character::DeActivateBob_Implementation()
 	return true;
 }
 
+void ABlobmentsV1Character::ReceiveDamage(int32 IncomingDamage)
+{
+	if (Health >= 0)
+	{
+		Health = Health - IncomingDamage;
+	}
+	if (Health <= 0 && !IsDead)
+	{
+		OnBobDeath();
+	}
+}
+
 //Movement Functions
 void ABlobmentsV1Character::BobPrepareJump(float DeltaSeconds)
 {
@@ -283,5 +299,10 @@ void ABlobmentsV1Character::SetCharacterRotation()
 	FVector directionNoZ = FVector(direction.X, direction.Y, 0.f);
 	FHitResult RotationSweepHitResult;
 	K2_SetActorRelativeRotation(directionNoZ.Rotation(), true, RotationSweepHitResult, false);
+}
+
+void ABlobmentsV1Character::OnBobDeath()
+{
+	IsDead = true;
 }
 
