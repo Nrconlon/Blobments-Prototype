@@ -55,7 +55,7 @@ public:
 		//Rotation stuff
 		/** Add rotation equal to the yaw (in degrees) provided. */
 		UFUNCTION(BlueprintCallable, Category = "Pawn|Input", meta = (Keywords = "AddInput"))
-			virtual void AddRotationInput(float DeltaYawDegrees);
+			virtual void SetRotationInput(float DeltaYawDegrees);
 
 		/** Get rotation input. Returns pre-clear value. */
 		UFUNCTION(BlueprintCallable, Category = "Pawn|Input", meta = (Keywords = "ConsumeInput"))
@@ -151,6 +151,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BadGuy")
 		float GlideDistancePerSecond;
 
+	// Current rotation input
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BadGuy")
+	float YawInput;
+
 
 private:
 	//* Min time between attacks */
@@ -164,8 +168,6 @@ private:
 	// Current attack button status.
 	uint32 bAttackInput : 1;
 
-	// Current rotation input.
-	float YawInput;
 
 	bool IsRotating;
 	bool IsGliding;

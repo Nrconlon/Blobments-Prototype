@@ -15,7 +15,6 @@ ABadGuyMain::ABadGuyMain()
 
 	Health = 100;
 	Damage = 20.0f;
-	YawSpeed = 90.0f;
 	JumpDistance = 20.0f;
 	JumpFrequency = 45.0f;
 
@@ -26,11 +25,14 @@ ABadGuyMain::ABadGuyMain()
 	TimeBeforeAttack = 0.7f;
 
 	//Movement
-	TimeBeforeJump = 0.7f;
-	GlideTime = 0.7f;
-	GlideDistancePerSecond = 20.0f;
+	TimeBeforeJump = 1.05f;
+	GlideTime = 0.5f;
+	GlideDistancePerSecond = 200.0f;
 	IsRotating = false;
 	IsGliding = false;
+
+	YawSpeed = 70.0f / TimeBeforeJump;
+	YawInput = 0.0f;
 
 
 }
@@ -51,8 +53,6 @@ void ABadGuyMain::Tick(float DeltaTime)
 	{
 		DetermineMovement(DeltaTime);
 	}
-
-	ConsumeRotationInput();
 	
 
 }
@@ -119,7 +119,7 @@ void ABadGuyMain::JumpForward_Implementation()
 	FTimerHandle TempHandle;
 	IsRotating = false;
 	IsGliding = true;
-	GetWorldTimerManager().SetTimer(TempHandle, this, &ABadGuyMain::Land, GlideTime, false, 0.0f);
+	GetWorldTimerManager().SetTimer(TempHandle, this, &ABadGuyMain::Land, GlideTime, false, GlideTime);
 }
 
 void ABadGuyMain::Land_Implementation()
@@ -131,20 +131,20 @@ void ABadGuyMain::Activate()
 {
 	FTimerHandle TempHandle;
 	IsRotating = true;
-	GetWorldTimerManager().SetTimer(TempHandle, this, &ABadGuyMain::JumpForward, TimeBeforeAttack, false, 0.0f);
+	GetWorldTimerManager().SetTimer(TempHandle, this, &ABadGuyMain::JumpForward, TimeBeforeJump, false, TimeBeforeJump);
 }
 
 void ABadGuyMain::AddAttackInput()
 {
 	FTimerHandle UnusedHandle;
 	bAttackInput = true;
-	GetWorldTimerManager().SetTimer(UnusedHandle, this, &ABadGuyMain::ConsumeAttackInput, TimeBeforeAttack, false, 0.0f);
+	GetWorldTimerManager().SetTimer(UnusedHandle, this, &ABadGuyMain::ConsumeAttackInput, TimeBeforeAttack, false, TimeBeforeAttack);
 
 }
 
-void ABadGuyMain::AddRotationInput(float DeltaYawDegrees)
+void ABadGuyMain::SetRotationInput(float DeltaYawDegrees)
 {
-	YawInput += DeltaYawDegrees;
+	YawInput = DeltaYawDegrees;
 }
 
 float ABadGuyMain::GetRotationInput()
@@ -187,8 +187,23 @@ void ABadGuyMain::DetermineMovement(float DeltaSeconds)
 {
 	if (IsRotating)
 	{
+		//Yaw Input goes from 0 to 3.1
+		float CurrentChangeInAngle = GetRotationInput();
 		float MaxYawThisFrame = YawSpeed * DeltaSeconds;
-		FRotator DesiredRot = GetActorRotation() + FRotator(0.0f, FMath::Clamp(GetRotationInput(), -MaxYawThisFrame, MaxYawThisFrame), 0.0f);
+		FRotator DesiredRot;
+		if (CurrentChangeInAngle > 0.4f || CurrentChangeInAngle < -0.4f)
+		{
+			if (CurrentChangeInAngle < 0)
+			{
+				MaxYawThisFrame = MaxYawThisFrame * -1.0f;
+			}
+			DesiredRot = GetActorRotation() + FRotator(0.0f, MaxYawThisFrame, 0.0f);
+		}
+		else 
+		{
+			DesiredRot = GetActorRotation() + FRotator(0.0f, MaxYawThisFrame  * (CurrentChangeInAngle / 0.4f), 0.0f);
+		}
+		
 		SetActorRotation(DesiredRot.Quaternion());
 	}
 	else if (IsGliding)

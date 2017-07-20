@@ -4,6 +4,7 @@
 #include "BadGuyController.h"
 #include "BadGuyMain.h"
 #include "BlobmentsV1GameMode.h"
+#include "Kismet/KismetMathLibrary.h"
 
 void ABadGuyController::Tick(float DeltaTime)
 {
@@ -11,13 +12,13 @@ void ABadGuyController::Tick(float DeltaTime)
 	{
 		if (AActor* Target = PawnAsBadGuy->GetTarget())
 		{
-			// We do have a target. Shamble toward it and attempt violence!
+			//  Find Rotation
 			FVector DirectionToTarget = (Target->GetActorLocation() - PawnAsBadGuy->GetActorLocation()).GetSafeNormal2D();
 			float DotToTarget = FVector::DotProduct(DirectionToTarget, PawnAsBadGuy->GetActorForwardVector());
 			float SidewaysDotToTarget = FVector::DotProduct(DirectionToTarget, PawnAsBadGuy->GetActorRightVector());
 			float DeltaYawDesired = FMath::Atan2(SidewaysDotToTarget, DotToTarget);
 
-			PawnAsBadGuy->AddRotationInput(DeltaYawDesired*100);
+			PawnAsBadGuy->SetRotationInput(DeltaYawDesired);
 
 			if (PawnAsBadGuy->BadGuyAIShouldAttack())
 			{
