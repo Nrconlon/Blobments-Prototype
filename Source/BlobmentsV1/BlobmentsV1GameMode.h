@@ -2,6 +2,7 @@
 #pragma once
 #include "BadGuyMain.h"
 #include "GameFramework/GameModeBase.h"
+#include "GameFramework/PlayerStart.h"
 #include "BlobmentsV1GameMode.generated.h"
 
 class ABadGuyMain;
@@ -22,6 +23,7 @@ public:
 
 	void StartTheBeat();
 	void BadGuyMainBeat();
+	void SpawnABadGuy();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
 	class ACurrentLandingDecal* LandingDecal;
@@ -35,8 +37,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drum")
 		float MainTimerBeat;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drum")
+		TSubclassOf<class ABadGuyMain> BadGuyBlueprint;
+
+	//UFUNCTION(BlueprintImplementableEvent, meta = (FriendlyName = "SpawnBadGuysFromBP"))
+		//virtual void SpawnBadGuyFromBP(FVector Location, FVector Rotation);
+
 private:
 	FTimerHandle DrumTimeHandle;
+	TArray<APlayerStart*> AllSpawnPoints;
+
+
+	
 
 };
 

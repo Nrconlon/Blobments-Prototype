@@ -3,6 +3,8 @@
 #include "BlobmentsV1.h"
 #include "BlobmentsV1GameMode.h"
 #include "BadGuyMain.h"
+#include "Kismet/GameplayStatics.h"
+#include "EngineUtils.h"
 #include "BlobmentsV1PlayerController.h"
 #include "CurrentLandingDecal.h"
 #include "BlobmentsV1Character.h"
@@ -19,7 +21,24 @@ ABlobmentsV1GameMode::ABlobmentsV1GameMode()
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UBlueprint> ItemBlueprint(TEXT("Blueprint'/Game/TopDownCPP/Blueprints/MainBadGuyBP'"));
+	if (ItemBlueprint.Object) {
+		BadGuyBlueprint = (UClass*)ItemBlueprint.Object->GetClass();
+	}
+
 	MainTimerBeat = 2.1f;
+	UWorld* const World = GetWorld();
+	if (World)
+	{
+		for (TObjectIterator<APlayerStart> Itr; Itr; ++Itr)
+		{
+			if (Itr->GetWorld() == World)
+			{
+				AllSpawnPoints.Add(*Itr);
+			}
+		}
+	}
+	
 }
 
 void ABlobmentsV1GameMode::BeginPlay()
@@ -61,7 +80,26 @@ void ABlobmentsV1GameMode::BadGuyMainBeat()
 	{
 		mainBadGuy->Activate();
 	}
+	SpawnABadGuy();
 }
+
+void ABlobmentsV1GameMode::SpawnABadGuy()
+{
+	if (AllSpawnPoints.Num() > 0)
+	{
+		int32 RandomNumber = FMath::RandRange(0, AllSpawnPoints.Num() - 1);
+		FVector Location = AllSpawnPoints[RandomNumber]->GetActorLocation();
+		FRotator Rotation = AllSpawnPoints[RandomNumber]->GetActorRotation();
+		FActorSpawnParameters SpawnInfo;
+		if (UWorld* World = GetWorld())
+		{
+			FActorSpawnParameters SpawnParams;
+			//UGameplayStatics::BeginSpawningActorFromBlueprint(GetWorld(), BadGuyBlueprint,)
+			World->SpawnActor<ABadGuyMain>(BadGuyBlueprint, Location, Rotation, SpawnParams);
+		}
+	}
+}
+
 
 void ABlobmentsV1GameMode::AddActorToBeat(AActor* IncomingActor)
 {

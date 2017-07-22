@@ -130,17 +130,6 @@ void ABlobmentsV1Character::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
-	//if (PotentialLandingDecal != nullptr)
-	//{
-	//	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	//	{
-	//		FHitResult TraceHitResult;
-	//		PC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
-	//		FVector CursorFV = TraceHitResult.ImpactNormal;
-	//		FRotator CursorR = CursorFV.Rotation();
-	//		
-	//	}
-	//}
 
 	//Breaking friction percentage on top of the constant breaking friction
 	//Amount per second
