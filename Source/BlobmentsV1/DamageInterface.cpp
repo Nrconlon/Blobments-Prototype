@@ -11,3 +11,8 @@ UDamageInterface::UDamageInterface(const class FObjectInitializer& ObjectInitial
 }
 
 // Add default functionality here for any IDamageInterface functions that are not pure virtual.
+
+FVector IDamageInterface::Bump(AActor* Bumper, FVector Velocity, bool IsPowerUp)
+{
+	return Velocity;
+}

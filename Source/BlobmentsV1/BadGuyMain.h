@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "DamageInterface.h"
 #include "GameFramework/Pawn.h"
 #include "BadGuyMain.generated.h"
 
@@ -9,7 +10,7 @@
 class ABlobmentsV1Character;
 
 UCLASS()
-class BLOBMENTSV1_API ABadGuyMain : public APawn
+class BLOBMENTSV1_API ABadGuyMain : public APawn, public IDamageInterface
 {
 	GENERATED_BODY()
 
@@ -25,7 +26,16 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "AI")
 		void SetTarget(AActor* NewTarget);
-	
+
+	// This can be used to handle death from different sources.
+	UFUNCTION(BlueprintNativeEvent, Category = "AI")
+		void BadGuyDeath();
+
+	//IDamageInterface
+	virtual void ReceiveDamage(int32 IncomingDamage) override;
+	virtual int32 GetHealthRemaining() override;
+	virtual FVector Bump(AActor* Bumper, FVector Velocity, bool IsPowerUp) override;
+	//~ End IDamageInterface
 
 	UFUNCTION(BlueprintCallable, Category = "AI")
 		AActor* GetTarget();
@@ -155,6 +165,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BadGuy")
 	float YawInput;
 
+	//* How far bad guy pushes */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BadGuy", meta = (ClampMin = "0.0"))
+		float PushPower;
+
+		//* How High bad guy pushes */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BadGuy", meta = (ClampMin = "0.0"))
+	float PushHeight;
+
 
 private:
 	//* Min time between attacks */
@@ -171,5 +189,7 @@ private:
 
 	bool IsRotating;
 	bool IsGliding;
+
+	bool IsAlive;
 	
 };

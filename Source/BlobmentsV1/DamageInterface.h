@@ -28,4 +28,5 @@ class BLOBMENTSV1_API IDamageInterface
 public:
 	virtual void ReceiveDamage(int32 IncomingDamage) = 0;
 	virtual int32 GetHealthRemaining() = 0;
+	virtual FVector Bump(AActor* Bumper, FVector Velocity, bool IsPowerUp);
 };

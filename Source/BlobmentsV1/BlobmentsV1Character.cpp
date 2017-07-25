@@ -19,9 +19,12 @@ ABlobmentsV1Character::ABlobmentsV1Character()
 	//Stats
 	IsDead = false;
 	Health = 100;
+	IsPowered = false;
+	PercentBeforePowered = 0.75f;
 
 	// Set size for player capsule
 	GetCapsuleComponent()->InitCapsuleSize(60.f, 60.0f);
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &ABlobmentsV1Character::OnOverlapBegin);
 
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
@@ -41,22 +44,6 @@ ABlobmentsV1Character::ABlobmentsV1Character()
 	}
 		
 	
-	// Create static Mesh
-/*	not needed, replaced with sprite
-MyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> StaticMeshAsset(TEXT("StaticMesh'/Game/MobileStarterContent/Props/MaterialSphere.MaterialSphere'"));
-	if (StaticMeshAsset.Succeeded())
-	{
-		MyMesh->SetStaticMesh(StaticMeshAsset.Object);
-	}
-	static ConstructorHelpers::FObjectFinder<UMaterial> MaterialAsset(TEXT("Material'/Game/MobileStarterContent/Props/Materials/M_MaterialSphere_Plain.M_MaterialSphere_Plain'"));
-	if (MaterialAsset.Succeeded())
-	{
-		MyMesh->SetMaterial(0,MaterialAsset.Object);
-	}
-	MyMesh->SetRelativeScale3D(FVector(1.1f, 1.1f, 1.1f));
-	MyMesh->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
-	*/ 
 	//Create sprite
 	if (!RootComponent)
 	{
@@ -118,6 +105,7 @@ MyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	//max time in air 1 sec, min time in air 0.5 sec, max wind up time 2 sec.  
 	CIncreaseMomentum = FVector(1000.f, 1000.f, 120.25f);
 	CMaxMomentum = CDefaultStartMomentum + (CIncreaseMomentum * 2);
+	MaxMomentumBeforePowered = CMaxMomentum.Size() * PercentBeforePowered;
 
 	//breaking friction constant
 	GetCharacterMovement()->BrakingFrictionFactor = 0.f;
@@ -149,7 +137,7 @@ void ABlobmentsV1Character::Tick(float DeltaSeconds)
 	}
 
 	SetDecalLocations();
-	if (!GetCharacterMovement()->IsFalling())
+	if (!GetCharacterMovement()->IsFalling() && WindingUp)
 	{
 		SetCharacterRotation();
 	}
@@ -167,7 +155,7 @@ bool ABlobmentsV1Character::HoldingClickAtLocation_Implementation(const FVector 
 		WindingUp = true;
 		PotentialMomentum = CDefaultStartMomentum;
 	}
-	
+	//Sets winding to true if on ground.  Which turns on BobPrepareJump on tick
 	return true;
 }
 
@@ -184,16 +172,26 @@ bool ABlobmentsV1Character::ActivateBob_Implementation()
 
 bool ABlobmentsV1Character::DeActivateBob_Implementation()
 {
-	WindingUp = false;
-	GetWorld()->GetTimerManager().ClearTimer(WindingUpTimerHandle);
-	PotentialMomentum = FVector(0.f, 0.f, 0.f);
-	return true;
+	if (!GetCharacterMovement()->IsFalling())
+	{
+		WindingUp = false;
+		//GetWorld()->GetTimerManager().ClearTimer(WindingUpTimerHandle); Timer not in use anymore?
+		PotentialMomentum = FVector(0.f, 0.f, 0.f);
+
+		IsPowered = false;
+		TogglePoweredMode(false);
+		return true;
+	}
+	return false;
+	
 }
 
 void ABlobmentsV1Character::ReceiveDamage(int32 IncomingDamage)
 {
+	DeActivateBob();
 	if (Health >= 0)
 	{
+		TakeDamageAnimation();
 		Health = Health - IncomingDamage;
 	}
 	if (Health <= 0 && !IsDead)
@@ -205,6 +203,13 @@ void ABlobmentsV1Character::ReceiveDamage(int32 IncomingDamage)
 //Movement Functions
 void ABlobmentsV1Character::BobPrepareJump(float DeltaSeconds)
 {
+	//Called every tick if WindingUp
+	if (PotentialMomentum.Size() > MaxMomentumBeforePowered)
+	{
+		//Turn Bob Red with sound effect.
+		TogglePoweredMode(true); 
+	}
+
 	if (CMaxMomentum.Size() > PotentialMomentum.Size())
 	{
 		PotentialMomentum = PotentialMomentum + (CIncreaseMomentum * DeltaSeconds);
@@ -214,7 +219,13 @@ void ABlobmentsV1Character::BobPrepareJump(float DeltaSeconds)
 //only called if not falling, launch character based on wind up
 void ABlobmentsV1Character::BobActivateJump()
 {
-	 
+	//If enough potential, turn on powered
+	if (PotentialMomentum.Size() > MaxMomentumBeforePowered)
+	{
+		//TogglePoweredMode(true);  should be on already
+		IsPowered = true;
+	}
+
 	FVector direction = AimingPoint - GetActorLocation();
 	direction.Normalize();
 	direction = FVector(direction.X, direction.Y, 1.f);
@@ -228,18 +239,7 @@ void ABlobmentsV1Character::BobActivateJump()
 	FRotator Rotation = FRotator(0.0f, 90.0f, 0.0f);
 	FActorSpawnParameters SpawnInfo;
 	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	//ACurrentLandingDecal* MCurrentLandingDecal = GetWorld()->SpawnActor<ACurrentLandingDecal>(ACurrentLandingDecal::StaticClass(), CurrentLandPoint, Rotation, SpawnInfo);
-	//MCurrentLandingDecal->SetLifeSpan(PotentialMomentum.Z / GetCharacterMovement()->GetGravityZ() * 2);//set life span to landing time.
-	//static ConstructorHelpers::FObjectFinder<UMaterial> DecalMaterialAssetCurrent(TEXT("Material'/Game/TopDownCPP/Blueprints/M_CurrentLandingDecal'"));
-	//if (DecalMaterialAssetCurrent.Succeeded())
-	//{
-	//	MCurrentLandingDecal->Decal->SetDecalMaterial(DecalMaterialAssetCurrent.Object);
-	//}
-	//MCurrentLandingDecal->Decal->DecalSize = FVector(16.0f, 32.0f, 600.0f);
-	//MCurrentLandingDecal->Decal->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f).Quaternion());
-	//MCurrentLandingDecal->Decal->FadeScreenSize = 0.0f;
-	/*CurrentLandingDecal->SetWorldLocation(CurrentLandPoint);
-	CurrentLandingDecal->SetVisibility(true);*/
+
 
 	PotentialMomentum = FVector(0.f, 0.f, 0.f);
 }
@@ -278,6 +278,11 @@ void ABlobmentsV1Character::OnMovementModeChanged(EMovementMode PrevMovementMode
 	{
 		GameModeRef->SetLandingDecalVisibility(false);
 		GetCharacterMovement()->bOrientRotationToMovement = false;
+		if (IsPowered)
+		{
+			Explode();
+		}
+		//DeActivateBob();
 	}
 
 }
@@ -290,8 +295,35 @@ void ABlobmentsV1Character::SetCharacterRotation()
 	K2_SetActorRelativeRotation(directionNoZ.Rotation(), true, RotationSweepHitResult, false);
 }
 
-void ABlobmentsV1Character::OnBobDeath()
+void ABlobmentsV1Character::OnBobDeath_Implementation()
 {
+
 	IsDead = true;
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		// TODO: Manage extra lives?
+		PC->RestartLevel();
+	}
+}
+
+
+void ABlobmentsV1Character::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	// Other Actor is the actor that triggered the event. Check that is not ourself.  
+	if ((OtherActor != nullptr) && (OtherActor != this) && (OtherComp != nullptr))
+	{
+		if (IDamageInterface* DamageTarget = Cast<IDamageInterface>(OtherActor))
+		{
+			FVector ReturnVelocity = DamageTarget->Bump(this, GetVelocity(), IsPowered);
+			if (!IsDead)
+			{
+				LaunchCharacter(ReturnVelocity, true, true);
+			}
+		}
+	}
+}
+
+void ABlobmentsV1Character::Explode_Implementation()
+{
 }
 

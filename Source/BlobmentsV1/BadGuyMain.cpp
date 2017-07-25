@@ -17,6 +17,8 @@ ABadGuyMain::ABadGuyMain()
 	Damage = 20.0f;
 	JumpDistance = 20.0f;
 	JumpFrequency = 45.0f;
+	PushPower = 70.0f;
+	PushHeight = 245.f;
 
 	//Attacking
 	AttackDistance = 100.0f;
@@ -34,6 +36,8 @@ ABadGuyMain::ABadGuyMain()
 	YawSpeed = 70.0f / TimeBeforeJump;
 	YawInput = 0.0f;
 
+	IsAlive = 1;
+
 
 }
 
@@ -49,7 +53,7 @@ void ABadGuyMain::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (Health >= 0)
+	if (Health >= 0 && IsAlive)
 	{
 		DetermineMovement(DeltaTime);
 	}
@@ -68,6 +72,48 @@ void ABadGuyMain::SetTarget(AActor* NewTarget)
 {
 	TargetActor = NewTarget;
 	TargetBob = Cast<ABlobmentsV1Character>(NewTarget);
+}
+
+void ABadGuyMain::BadGuyDeath_Implementation()
+{
+	FVector OldLocation = GetActorLocation();
+	SetActorLocation(FVector(OldLocation.X, OldLocation.Y, OldLocation.Z - 50), true);
+}
+
+void ABadGuyMain::ReceiveDamage(int32 IncomingDamage)
+{
+}
+
+int32 ABadGuyMain::GetHealthRemaining()
+{
+	if (IsAlive)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+FVector ABadGuyMain::Bump(AActor* Bumper, FVector Velocity, bool IsPowerUp)
+{
+	FVector ReturnVelocity = Velocity;
+	if (IsPowerUp)
+	{
+		IsAlive = 0;
+		BadGuyDeath();
+	}
+	else
+	{
+		if (IDamageInterface* DamageTarget = Cast<IDamageInterface>(Bumper))
+		{
+			DamageTarget->ReceiveDamage(Damage);
+			ReturnVelocity = PushPower * (Bumper->GetActorLocation() - GetActorLocation());
+			ReturnVelocity = FVector(ReturnVelocity.X, ReturnVelocity.Y, PushHeight);
+		}
+	}
+	return ReturnVelocity;
 }
 
 AActor* ABadGuyMain::GetTarget()
@@ -171,7 +217,8 @@ void ABadGuyMain::ConsumeAttackInput()
 	{
 		if (IDamageInterface* DamageTarget = Cast<IDamageInterface>(GetTarget()))
 		{
-			DamageTarget->ReceiveDamage(Damage);
+			//This form of attacking turned off, replaced with *Bump* on touch from player
+			//DamageTarget->ReceiveDamage(Damage);  
 		}
 
 	}

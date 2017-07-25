@@ -14,8 +14,21 @@ class ABlobmentsV1Character : public ACharacter, public IMainPlayerInterface, pu
 
 public:
 
-	UFUNCTION(BlueprintCallable, Category = "MyCategory")
+	UFUNCTION(BlueprintNativeEvent, Category = "MyCategory")
 		void OnBobDeath();
+
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
+		void TogglePoweredMode(bool IsPowered);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "MyCategory")
+		void TakeDamageAnimation();
+
+	UFUNCTION(BlueprintCallable, Category = "MyCategory")
+		void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Abilities")
+		void Explode();
 
 	//MainPlayerInterface
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "MyCategory")
@@ -79,6 +92,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 		FVector CMaxMomentum;
 
+	//Percentage of the maximum potential launch before being powered.  this will be 2 seconds times this number.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+		float PercentBeforePowered;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 		float CBreakingAlpha;
 
@@ -123,6 +140,8 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats", meta = (AllowPrivateAccess = "true"))
 		int32 Health;
 
+	bool IsPowered;
+	float MaxMomentumBeforePowered;
 	
 
 	
