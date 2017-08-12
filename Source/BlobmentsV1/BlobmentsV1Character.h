@@ -17,7 +17,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "MyCategory")
 		void OnBobDeath();
 
-
+	//Called every tick once past powered point
 	UFUNCTION(BlueprintImplementableEvent, Category = "Abilities")
 		void TogglePoweredMode(bool IsPowered);
 
@@ -140,7 +140,13 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats", meta = (AllowPrivateAccess = "true"))
 		int32 Health;
 
+	/** Turn on when setting sprite to red, and off when setting to green in blueprints */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats", meta = (AllowPrivateAccess = "true"))
+		bool IsRed;
+
 	bool IsPowered;
+	bool HasLanded;
+	
 	float MaxMomentumBeforePowered;
 	
 
@@ -148,6 +154,7 @@ private:
 
 	/* Handle to manage the timer */
 	FTimerHandle WindingUpTimerHandle;
+
 	
 
 

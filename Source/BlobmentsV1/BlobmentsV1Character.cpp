@@ -67,7 +67,8 @@ ABlobmentsV1Character::ABlobmentsV1Character()
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->bEnableCameraRotationLag = false;
 	CameraBoom->RelativeRotation = FRotator(-90.f, 0.f, 0.f);
-	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
+	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with levellog
+
 
 										  // Create a camera...
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
@@ -106,6 +107,7 @@ ABlobmentsV1Character::ABlobmentsV1Character()
 	CIncreaseMomentum = FVector(1000.f, 1000.f, 120.25f);
 	CMaxMomentum = CDefaultStartMomentum + (CIncreaseMomentum * 2);
 	MaxMomentumBeforePowered = CMaxMomentum.Size() * PercentBeforePowered;
+	HasLanded = false;
 
 	//breaking friction constant
 	GetCharacterMovement()->BrakingFrictionFactor = 0.f;
@@ -149,9 +151,11 @@ void ABlobmentsV1Character::Tick(float DeltaSeconds)
 //This is called every tick from controller
 bool ABlobmentsV1Character::HoldingClickAtLocation_Implementation(const FVector DestLocation)
 {
+	
 	AimingPoint = DestLocation;
 	if (!WindingUp && GetCharacterMovement()->IsMovingOnGround())
 	{
+		UE_LOG(NeilsLog, Warning, TEXT("Setting Windup to true"));
 		WindingUp = true;
 		PotentialMomentum = CDefaultStartMomentum;
 	}
@@ -165,6 +169,7 @@ bool ABlobmentsV1Character::ActivateBob_Implementation()
 	WindingUp = false;
 	if (!GetCharacterMovement()->IsFalling())
 	{
+		UE_LOG(NeilsLog, Warning, TEXT("I jumped in activatebob"));
 		BobActivateJump();
 	}
 	return true;
@@ -172,11 +177,12 @@ bool ABlobmentsV1Character::ActivateBob_Implementation()
 
 bool ABlobmentsV1Character::DeActivateBob_Implementation()
 {
+	UE_LOG(NeilsLog, Warning, TEXT("Bob Deactivated"));
 	if (!GetCharacterMovement()->IsFalling())
 	{
 		WindingUp = false;
-		//GetWorld()->GetTimerManager().ClearTimer(WindingUpTimerHandle); Timer not in use anymore?
-		PotentialMomentum = FVector(0.f, 0.f, 0.f);
+		GetWorld()->GetTimerManager().ClearTimer(WindingUpTimerHandle); //Timer not in use anymore?
+		//PotentialMomentum = FVector(0.f, 0.f, 0.f);
 
 		IsPowered = false;
 		TogglePoweredMode(false);
@@ -204,7 +210,7 @@ void ABlobmentsV1Character::ReceiveDamage(int32 IncomingDamage)
 void ABlobmentsV1Character::BobPrepareJump(float DeltaSeconds)
 {
 	//Called every tick if WindingUp
-	if (PotentialMomentum.Size() > MaxMomentumBeforePowered)
+	if (PotentialMomentum.Size() > MaxMomentumBeforePowered && !IsRed)
 	{
 		//Turn Bob Red with sound effect.
 		TogglePoweredMode(true); 
@@ -230,6 +236,7 @@ void ABlobmentsV1Character::BobActivateJump()
 	direction.Normalize();
 	direction = FVector(direction.X, direction.Y, 1.f);
 	PotentialMomentum = PotentialMomentum * direction;
+	UE_LOG(NeilsLog, Warning, TEXT("Launching character with "));
 	LaunchCharacter(PotentialMomentum, false, false);
 
 	//Turn on decal, turned back off once landed.
@@ -240,7 +247,7 @@ void ABlobmentsV1Character::BobActivateJump()
 	FActorSpawnParameters SpawnInfo;
 	SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-
+	HasLanded = false;
 	PotentialMomentum = FVector(0.f, 0.f, 0.f);
 }
 
@@ -270,19 +277,23 @@ void ABlobmentsV1Character::SetDecalLocations()
 
 void ABlobmentsV1Character::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
 {
+	const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EMovementMode"), true);
+	EMovementMode fallingMode = MOVE_Falling;
 	if (GetCharacterMovement()->IsFalling())
 	{
 		//GetCharacterMovement()->bOrientRotationToMovement = true;
 	}
-	else
+	else if(fallingMode == PrevMovementMode && !HasLanded)
 	{
+		UE_LOG(NeilsLog, Warning, TEXT("Landed"));
+		HasLanded = true;
 		GameModeRef->SetLandingDecalVisibility(false);
 		GetCharacterMovement()->bOrientRotationToMovement = false;
 		if (IsPowered)
 		{
 			Explode();
 		}
-		//DeActivateBob();
+		DeActivateBob();
 	}
 
 }
@@ -315,6 +326,7 @@ void ABlobmentsV1Character::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, 
 		if (IDamageInterface* DamageTarget = Cast<IDamageInterface>(OtherActor))
 		{
 			FVector ReturnVelocity = DamageTarget->Bump(this, GetVelocity(), IsPowered);
+			UE_LOG(NeilsLog, Warning, TEXT("Bumped"));
 			if (!IsDead)
 			{
 				LaunchCharacter(ReturnVelocity, true, true);

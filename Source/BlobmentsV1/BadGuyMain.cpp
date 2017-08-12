@@ -3,6 +3,10 @@
 #include "BlobmentsV1.h"
 #include "BadGuyMain.h"
 #include "BlobmentsV1Character.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Global_Log.h"
+
+DEFINE_LOG_CATEGORY_STATIC(NeilsLog, All, All)
 
 
 // Sets default values
@@ -109,7 +113,7 @@ FVector ABadGuyMain::Bump(AActor* Bumper, FVector Velocity, bool IsPowerUp)
 		if (IDamageInterface* DamageTarget = Cast<IDamageInterface>(Bumper))
 		{
 			DamageTarget->ReceiveDamage(Damage);
-			ReturnVelocity = PushPower * (Bumper->GetActorLocation() - GetActorLocation());
+			ReturnVelocity = PushPower * UKismetMathLibrary::GetDirectionUnitVector(GetActorLocation(),Bumper->GetActorLocation());
 			ReturnVelocity = FVector(ReturnVelocity.X, ReturnVelocity.Y, PushHeight);
 		}
 	}
