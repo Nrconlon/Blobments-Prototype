@@ -107,7 +107,7 @@ ABlobmentsV1Character::ABlobmentsV1Character()
 	CIncreaseMomentum = FVector(1000.f, 1000.f, 120.25f);
 	CMaxMomentum = CDefaultStartMomentum + (CIncreaseMomentum * 2);
 	MaxMomentumBeforePowered = CMaxMomentum.Size() * PercentBeforePowered;
-	HasLanded = false;
+	HasLanded = true;
 
 	//breaking friction constant
 	GetCharacterMovement()->BrakingFrictionFactor = 0.f;
@@ -155,7 +155,7 @@ bool ABlobmentsV1Character::HoldingClickAtLocation_Implementation(const FVector 
 	AimingPoint = DestLocation;
 	if (!WindingUp && GetCharacterMovement()->IsMovingOnGround())
 	{
-		UE_LOG(NeilsLog, Warning, TEXT("Setting Windup to true"));
+		//UE_LOG(NeilsLog, Warning, TEXT("Setting Windup to true[1]"));
 		WindingUp = true;
 		PotentialMomentum = CDefaultStartMomentum;
 	}
@@ -165,11 +165,12 @@ bool ABlobmentsV1Character::HoldingClickAtLocation_Implementation(const FVector 
 
 bool ABlobmentsV1Character::ActivateBob_Implementation()
 {
+	//UE_LOG(NeilsLog, Warning, TEXT("I jumped in activatebob [2]"));
 	CurrentLandPoint = AimingPoint;
 	WindingUp = false;
-	if (!GetCharacterMovement()->IsFalling())
+	if (HasLanded)
 	{
-		UE_LOG(NeilsLog, Warning, TEXT("I jumped in activatebob"));
+		//UE_LOG(NeilsLog, Warning, TEXT("I jumped in activatebob[3]"));
 		BobActivateJump();
 	}
 	return true;
@@ -177,7 +178,7 @@ bool ABlobmentsV1Character::ActivateBob_Implementation()
 
 bool ABlobmentsV1Character::DeActivateBob_Implementation()
 {
-	UE_LOG(NeilsLog, Warning, TEXT("Bob Deactivated"));
+	//UE_LOG(NeilsLog, Warning, TEXT("Bob Deactivated"));
 	if (!GetCharacterMovement()->IsFalling())
 	{
 		WindingUp = false;
@@ -236,7 +237,7 @@ void ABlobmentsV1Character::BobActivateJump()
 	direction.Normalize();
 	direction = FVector(direction.X, direction.Y, 1.f);
 	PotentialMomentum = PotentialMomentum * direction;
-	UE_LOG(NeilsLog, Warning, TEXT("Launching character with "));
+	//UE_LOG(NeilsLog, Warning, TEXT("Launching character with "));
 	LaunchCharacter(PotentialMomentum, false, false);
 
 	//Turn on decal, turned back off once landed.
@@ -285,7 +286,7 @@ void ABlobmentsV1Character::OnMovementModeChanged(EMovementMode PrevMovementMode
 	}
 	else if(fallingMode == PrevMovementMode && !HasLanded)
 	{
-		UE_LOG(NeilsLog, Warning, TEXT("Landed"));
+		//UE_LOG(NeilsLog, Warning, TEXT("Landed"));
 		HasLanded = true;
 		GameModeRef->SetLandingDecalVisibility(false);
 		GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -308,7 +309,7 @@ void ABlobmentsV1Character::SetCharacterRotation()
 
 void ABlobmentsV1Character::OnBobDeath_Implementation()
 {
-
+	HasLanded = true;
 	IsDead = true;
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
@@ -326,7 +327,7 @@ void ABlobmentsV1Character::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, 
 		if (IDamageInterface* DamageTarget = Cast<IDamageInterface>(OtherActor))
 		{
 			FVector ReturnVelocity = DamageTarget->Bump(this, GetVelocity(), IsPowered);
-			UE_LOG(NeilsLog, Warning, TEXT("Bumped"));
+			//UE_LOG(NeilsLog, Warning, TEXT("Bumped"));
 			if (!IsDead)
 			{
 				LaunchCharacter(ReturnVelocity, true, true);

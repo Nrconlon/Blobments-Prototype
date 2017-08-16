@@ -3,6 +3,7 @@
 
 # Visual Studio 2015 database file
 *.VC.db
+*.pak
 
 # Compiled Object files
 *.slo

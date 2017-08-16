@@ -2,10 +2,13 @@
 
 Simple game made using c++ in unreal engine.
 
+Click and hold to power up jump.  If you hold for long enough bob becomes red and can kill enemies.
+If you click on land bob will maintain momentum.  
+
 I wanted to solidify my skills in C++ so I decided to use coding instead of blueprints for this project.
 
 All the c++ code is found in GitHub\Blobments-Prototype\Source\BlobmentsV1
 
-Packaged project found in the packaged project folder
+Packaged project found at https://github.com/Nrconlon/Blobments-Packaged
 
-Bug in the movement at the moment that stops bob from moving fluently.
+no health bars, missing drum beat, movement bug after death.
