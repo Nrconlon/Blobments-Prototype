@@ -336,6 +336,7 @@ void ABlobmentsV1Character::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, 
 	}
 }
 
+
 void ABlobmentsV1Character::Explode_Implementation()
 {
 }
