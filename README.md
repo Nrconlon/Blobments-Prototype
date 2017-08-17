@@ -9,6 +9,4 @@ I wanted to solidify my skills in C++ so I decided to use coding instead of blue
 
 All the c++ code is found in GitHub\Blobments-Prototype\Source\BlobmentsV1
 
-Packaged project found at https://github.com/Nrconlon/Blobments-Packaged
-
 no health bars, missing drum beat, movement bug after death.
