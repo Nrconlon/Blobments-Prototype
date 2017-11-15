@@ -13,7 +13,7 @@ class ABlobmentsV1Character : public ACharacter, public IMainPlayerInterface, pu
 
 
 public:
-
+	ABlobmentsV1Character();
 	UFUNCTION(BlueprintNativeEvent, Category = "MyCategory")
 		void OnBobDeath();
 
@@ -46,9 +46,6 @@ public:
 	//IDamageInterface
 	virtual void ReceiveDamage(int32 IncomingDamage) override;
 	virtual int32 GetHealthRemaining() override { return Health; }
-
-
-	ABlobmentsV1Character();
 
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;

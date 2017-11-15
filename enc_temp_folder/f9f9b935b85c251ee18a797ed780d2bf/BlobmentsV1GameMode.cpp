@@ -108,6 +108,7 @@ void ABlobmentsV1GameMode::SpawnABadGuy()
 		if (UWorld* World = GetWorld())
 		{
 			FActorSpawnParameters SpawnParams;
+			//UGameplayStatics::BeginSpawningActorFromBlueprint(GetWorld(), BadGuyBlueprint,)
 			World->SpawnActor<ABadGuyMain>(BadGuyBlueprint, Location, Rotation, SpawnParams);
 		}
 	}

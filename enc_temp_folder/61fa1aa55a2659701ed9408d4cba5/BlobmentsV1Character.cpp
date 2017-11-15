@@ -123,6 +123,9 @@ void ABlobmentsV1Character::Tick(float DeltaSeconds)
 	if (GetCharacterMovement()->IsMovingOnGround())
 	{
 		FVector amountToDecrease = GetVelocity() / CBreakingAlpha;  //Greater than 2 seconds.
+		/*FVector direction = GetVelocity().GetSafeNormal();
+		direction = direction * -1;
+		*/
 		amountToDecrease = amountToDecrease * -1 * DeltaSeconds;
 		LaunchCharacter(amountToDecrease, false, false);
 

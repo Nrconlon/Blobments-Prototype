@@ -2,6 +2,7 @@
 
 #include "BlobmentsV1.h"
 #include "BadGuyMain.h"
+#include "BlobmentsV1GameMode.h"
 #include "BlobmentsV1Character.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Global_Log.h"
@@ -265,5 +266,6 @@ void ABadGuyMain::DetermineMovement(float DeltaSeconds)
 		SetActorLocation(DesiredLoc, true);
 	}
 }
+
 
 

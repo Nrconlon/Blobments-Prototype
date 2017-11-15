@@ -20,6 +20,7 @@ public:
 	virtual void SetLandingDecalLocation(FVector location);
 	virtual void SetLandingDecalVisibility(bool visible);
 	void AddActorToBeat(AActor* IncomingActor);
+	void RemoveActorFromBeat(AActor* IncomingActor);
 
 	void StartTheBeat();
 	void BadGuyMainBeat();
